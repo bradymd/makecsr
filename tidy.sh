@@ -1,0 +1,1 @@
+rm  *.cnf *.key *.csr

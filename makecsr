@@ -110,14 +110,22 @@ if len(altnames) == 1:
   results = str(subprocess.check_output(cmd3.split(), stderr=subprocess.STDOUT, stdin=p2.stdout))
   print (highlight + "\t\t" + fname + ".key  and " + fname + ".csr" )
 
+# this names line is only good for the -subj
+# It has to be formated / broken down into lines for .cnf if multiple alt names
+n = names.split()
+snippet1=""
+for n in names.split("/"):
+    snippet1=snippet1 + n + "\n"
+
 # If there are altnames its slightly more involved
 # Generate a snippet to go in the openssl.cnf file
+# and sadly it will need ALL the names in openssl.cnf for CentOS 7
 if len(altnames) != 1:
   print("\t\tThe existing certificate has Altnames")
   count=1
-  snippet=""
+  snippet2=""
   for alt in altnames:
-    snippet=snippet + "\nDNS." + str(count) + " = " + alt 
+    snippet2=snippet2 + "\nDNS." + str(count) + " = " + alt 
     count=count+1
   opensslcnf="""
 #----cut-and-paste-to-a-file openssl.cnf
@@ -129,12 +137,12 @@ req_extensions = req_ext
 distinguished_name = dn
 
 [dn]
-
+""" + snippet1 + """
 [ req_ext ]
 subjectAltName = @alt_names
 
 [alt_names]
-""" + snippet  + """ 
+""" + snippet2  + """ 
 """
   # Write it to a file
   myText = open(fname + ".cnf",'w')
@@ -142,11 +150,12 @@ subjectAltName = @alt_names
   myText.close()
 
   #  Compose the command ready to generate key and CSR - show the command to the user
-  cmd1="openssl req -new -nodes -newkey rsa:4096 -keyout " + fname + ".key -out " + fname + ".csr -config " + fname + ".cnf  -subj "
+  cmd1="openssl req -new -nodes -newkey rsa:4096 -keyout " + fname + ".key -out " + fname + ".csr -config " + fname + ".cnf   "
   print(highlight + "You can generate the certificate request (CSR) and a new key to replace this like this:")
-  print("\t\t" + cmd1 + "\"" +  names + "\"")
+  #print("\t\t" + cmd1 + "\"" +  names + "\"")
+  print( cmd1 )
   c=cmd1.split()
-  c.append(names)
+  #c.append(names)
   print(highlight + "Generating locally:")
   p2 = subprocess.Popen(c, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
   cmd3="/usr/bin/cat -"
